@@ -2,11 +2,14 @@ import pandas as pd
 import os
 import sys
 import time
+import math
 from datetime import datetime
 from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # ====== VALIDASI & BACA EXCEL ======
-file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN JUNTIKEBON 1/SDN 1 Juntikebon_kelas 2 4.xlsx"
+file_path = "C:/Users/Al/Documents/PKGSEKOLAH/HASIL/SDN JUNTIKEBON 1/SDN 1 Juntikebon_kelas 5.xlsx"
+
 selector_nav_prev = ".mx-icon-double-left"  # tombol mundur tahun
 selector_nav_next = ".mx-icon-double-right"  # tombol maju tahun
 selector_input_date = "div[class='mx-datepicker']"
@@ -23,7 +26,7 @@ try:
 
     df = pd.read_excel(file_path)
     # GANTI START ROW HARUS
-    start_row = 97  # 0-based index, jadi baris 47 = index 46
+    start_row = 41  # 0-based index, jadi baris 47 = index 46
     start_col = 1   # kolom ke-2 = index 1
 
     data = df.iloc[start_row:, start_col:]
@@ -54,6 +57,24 @@ def pilih_sekolah(page, nama_sekolah: str):
     page.fill("input[placeholder='Cari nama sekolah']", nama_sekolah)
     page.click(f"div.items-center >> text={nama_sekolah}")
     page.wait_for_selector("div.modal-content", state="hidden")
+
+def no_wa(page, nomor: str):
+    nomor_wa = "81522792005"
+    if nomor is None or (isinstance(nomor, float) and math.isnan(nomor)) or str(nomor).strip() == "":
+        page.fill("input[name='Nomor Whatsapp']", nomor_wa)
+        return
+
+    # Pastikan jadi string
+    if isinstance(nomor, float):
+        nomor = str(int(nomor))  # hilangkan .0
+    else:
+        nomor = str(nomor)
+
+    # Bersihkan awalan 0
+    if nomor.startswith("0"):
+        nomor = nomor[1:]
+
+    page.fill("input[name='Nomor Whatsapp']", nomor)
 
 def pilih_jenjang(page, kode_kelas: str):
     # Klik dropdown
@@ -162,7 +183,8 @@ def daftar_pasien():
             pilih_jenis_kelamin(page, kode_kelamin)
             kode_disabilitas = row[11]
             disabilitas(page, kode_disabilitas)
-            page.fill("input[name='Nomor Whatsapp']", "81522792005")
+            nomor = row[10]
+            no_wa(page, nomor)
             nama_sekolah = "UPTD SDN 1 JUNTIKEBON"
             pilih_sekolah(page, nama_sekolah)
             kode_kelas = row[4]
@@ -175,9 +197,26 @@ def daftar_pasien():
 
             page.click("text=Selanjutnya")
             # page.wait_for_load_state("networkidle")
+
+            # Cek apakah tombol "Tutup" ada
+            try:
+                if page.wait_for_selector("button.w-fill >> text=Tutup", timeout=2000).is_visible():
+                    page.click("button.w-fill >> text=Tutup")
+                else:
+                    raise Exception("Tombol 'Tutup' tidak ada")
+            except:
+                try:
+                    if page.wait_for_selector("text=Terjadi kesalahan", timeout=3000):
+                        print(f"⚠ Data index {index} gagal disubmit (Terjadi kesalahan). Skip...")
+                        page.click("button.btn-fill-warning")  # Klik OK
+                        page.wait_for_selector("div.bg-white:has-text('Formulir Pendaftaran')", timeout=5000)
+                        page.locator("button.absolute.right-4.top-3").click()
+                except:
+                    print(f"❓ Tidak ada tombol 'Tutup' atau modal error")
+
             time.sleep(1)
 
-            page.click("button.w-fill >> text=Tutup")
+            # page.click("button.w-fill >> text=Tutup")
 
             page.wait_for_selector("text=Daftar Baru", state="visible", timeout=5000)
         print("✅ Semua data berhasil diinput")
