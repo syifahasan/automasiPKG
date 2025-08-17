@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # ====== VALIDASI & BACA EXCEL ======
-file_path = "C:/Users/Al/Documents/PKGSEKOLAH/HASIL/SDN JUNTIKEBON 1/SDN 1 Juntikebon_kelas 5.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/MII DADAP/KELAS 2.xlsx"
 
 selector_nav_prev = ".mx-icon-double-left"  # tombol mundur tahun
 selector_nav_next = ".mx-icon-double-right"  # tombol maju tahun
@@ -26,7 +26,7 @@ try:
 
     df = pd.read_excel(file_path)
     # GANTI START ROW HARUS
-    start_row = 41  # 0-based index, jadi baris 47 = index 46
+    start_row = 10  # 0-based index, jadi baris 47 = index 46
     start_col = 1   # kolom ke-2 = index 1
 
     data = df.iloc[start_row:, start_col:]
@@ -47,6 +47,19 @@ except (FileNotFoundError, ValueError) as e:
 except Exception as e:
     print(f"❌ Terjadi kesalahan saat membaca file: {e}")
     sys.exit(1)
+
+def isi_nik(page, row, index):
+    nik = row[6]  # ambil NIK dari kolom ke-7 (index 6)
+    
+    # cek kosong atau NaN
+    if nik is None or str(nik).strip() == "" or (isinstance(nik, float) and math.isnan(nik)):
+        print(f"⚠ Data index {index} dilewati karena NIK kosong")
+        page.locator("button.absolute.right-4.top-3").click()
+        return False   # menandakan dilewati
+    
+    # isi ke form
+    page.fill("input[name='NIK']", str(int(nik)) if isinstance(nik, float) else str(nik))
+    return True
 
 def pilih_sekolah(page, nama_sekolah: str):
     # Klik dropdown
@@ -175,7 +188,8 @@ def daftar_pasien():
             page.locator("text=Daftar Baru").first.click()
             page.wait_for_selector("form >> input[name='NIK']", timeout=5000)
 
-            page.fill("input[name='NIK']", str(row[6]))        # Kolom pertama setelah start_col
+            if not isi_nik(page, row, index):
+                continue  # langsung lompat ke siswa berikutnya
             page.fill("input[name='Nama']", str(row[0]))      # Kolom kedua setelah start_col
             tgl = pd.to_datetime(row[7])
             pilih_tanggal(page, tgl)
@@ -185,12 +199,12 @@ def daftar_pasien():
             disabilitas(page, kode_disabilitas)
             nomor = row[10]
             no_wa(page, nomor)
-            nama_sekolah = "UPTD SDN 1 JUNTIKEBON"
+            nama_sekolah = "MIS ISLAMIYAH DADAP"
             pilih_sekolah(page, nama_sekolah)
             kode_kelas = row[4]
             pilih_jenjang(page, kode_kelas)
             page.check("input[type='checkbox'][id='alamat-sama-dengan-sekolah']", force=True)
-            alamat = " ".join(nama_sekolah.split()[3:])
+            alamat = " ".join(nama_sekolah.split()[2:])
             page.fill("textarea#detail-domisili", str(alamat))
 
             input("Tekan ENTER untuk lanjut submit...")
