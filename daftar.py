@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # ====== VALIDASI & BACA EXCEL ======
-file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/MII DADAP/KELAS 2.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN DADAP 5/kelas 3 4.xlsx"
 
 selector_nav_prev = ".mx-icon-double-left"  # tombol mundur tahun
 selector_nav_next = ".mx-icon-double-right"  # tombol maju tahun
@@ -26,11 +26,11 @@ try:
 
     df = pd.read_excel(file_path)
     # GANTI START ROW HARUS
-    start_row = 10  # 0-based index, jadi baris 47 = index 46
+    start_row = 27  # 0-based index, jadi baris 47 = index 46
     start_col = 1   # kolom ke-2 = index 1
 
     data = df.iloc[start_row:, start_col:]
-    tanggal_list = pd.to_datetime(df.iloc[47, 8], dayfirst=True, errors='coerce')
+    # tanggal_list = pd.to_datetime(df.iloc[47, 8], dayfirst=True, errors='coerce')
     data = data.reset_index(drop=True)
     
     if df.empty:
@@ -199,12 +199,12 @@ def daftar_pasien():
             disabilitas(page, kode_disabilitas)
             nomor = row[10]
             no_wa(page, nomor)
-            nama_sekolah = "MIS ISLAMIYAH DADAP"
+            nama_sekolah = "UPTD SDN 5 DADAP"
             pilih_sekolah(page, nama_sekolah)
             kode_kelas = row[4]
             pilih_jenjang(page, kode_kelas)
             page.check("input[type='checkbox'][id='alamat-sama-dengan-sekolah']", force=True)
-            alamat = " ".join(nama_sekolah.split()[2:])
+            alamat = " ".join(nama_sekolah.split()[3:])
             page.fill("textarea#detail-domisili", str(alamat))
 
             input("Tekan ENTER untuk lanjut submit...")
