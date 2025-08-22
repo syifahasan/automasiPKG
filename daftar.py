@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # ====== VALIDASI & BACA EXCEL ======
-file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN JUNTIKEBON 2/SDN Juntikebon2 KELAS 1.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN JUNTINYUAT 1/SDN 1 JUNTINYUAT KELAS 1 2.xlsx"
 
 selector_nav_prev = ".mx-icon-double-left"  # tombol mundur tahun
 selector_nav_next = ".mx-icon-double-right"  # tombol maju tahun
@@ -26,7 +26,7 @@ try:
 
     df = pd.read_excel(file_path)
     # GANTI START ROW HARUS
-    start_row = 179  # 0-based index, jadi baris 47 = index 46
+    start_row = 10  # 0-based index, jadi baris 47 = index 46
     start_col = 1   # kolom ke-2 = index 1
 
     data = df.iloc[start_row:, start_col:]
@@ -199,7 +199,7 @@ def daftar_pasien():
             disabilitas(page, kode_disabilitas)
             nomor = row[10]
             no_wa(page, nomor)
-            nama_sekolah = "UPTD SDN 2 JUNTIKEBON"
+            nama_sekolah = "UPTD SDN 1 JUNTINYUAT"
             pilih_sekolah(page, nama_sekolah)
             kode_kelas = row[4]
             pilih_jenjang(page, kode_kelas)
