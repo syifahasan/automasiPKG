@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # ====== VALIDASI & BACA EXCEL ======
-file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN JUNTINYUAT 1/SDN 1 JUNTINYUAT KELAS 1 2.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/MII JUNTIKEBON/KELAS 1 5.xlsx"
 
 selector_nav_prev = ".mx-icon-double-left"  # tombol mundur tahun
 selector_nav_next = ".mx-icon-double-right"  # tombol maju tahun
@@ -199,12 +199,12 @@ def daftar_pasien():
             disabilitas(page, kode_disabilitas)
             nomor = row[10]
             no_wa(page, nomor)
-            nama_sekolah = "UPTD SDN 1 JUNTINYUAT"
+            nama_sekolah = "MIS ISLAMIYAH JUNTIKEBON"
             pilih_sekolah(page, nama_sekolah)
             kode_kelas = row[4]
             pilih_jenjang(page, kode_kelas)
             page.check("input[type='checkbox'][id='alamat-sama-dengan-sekolah']", force=True)
-            alamat = " ".join(nama_sekolah.split()[3:])
+            alamat = " ".join(nama_sekolah.split()[2:])
             page.fill("textarea#detail-domisili", str(alamat))
 
             #input("Tekan ENTER untuk lanjut submit...")
@@ -227,7 +227,11 @@ def daftar_pasien():
                         page.wait_for_selector("div.bg-white:has-text('Formulir Pendaftaran')", timeout=5000)
                         page.locator("button.absolute.right-4.top-3").click()
                 except:
-                    print(f"❓ Tidak ada tombol 'Tutup' atau modal error")
+                    time.sleep(10)
+                    if page.wait_for_selector("button.w-fill >> text=Tutup", timeout=3000):
+                        page.click("button.w-fill >> text=Tutup")
+                    else:
+                        print(f"❓ Tidak ada tombol 'Tutup' atau modal error")
 
             time.sleep(1)
 
