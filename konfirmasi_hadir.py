@@ -74,27 +74,42 @@ def konfirmasi_hadir():
                 page.locator("div.py-2.px-4.cursor-pointer", has_text=kelas).click()
 
                 page.wait_for_timeout(2000)
+                pagination = page.locator("ul.vpagination li.page-item a.page-link")
+                total_halaman = pagination.count()
+                if total_halaman == 0:
+                    total_halaman = 1  # fallback kalau cuma 1 halaman
 
-                konfirmasi_buttons = page.locator("button:has-text('Konfirmasi Hadir')")
-                count = konfirmasi_buttons.count()
-                if count > 0:
-                    print(f"    🔘 Ditemukan {count} peserta belum konfirmasi")
-                    for i in range(count):
-                        konfirmasi_buttons.first.click()
-                        page.wait_for_timeout(500)
-                        page.wait_for_selector("div.max-h-full", timeout=5000)
-                        page.wait_for_selector("input#verify", timeout=5000)
-                        page.click("div.check")
-                        
-                        hadir_btn = page.locator("button:has(div.tracking-wide:has-text('Hadir'))").last
-                        hadir_btn.click()
-                        if page.wait_for_selector("button.w-fill >> text=Tutup", timeout=3000):
-                            page.click("button.w-fill >> text=Tutup")
-                        else:
-                            print(f"❓ Tidak ada tombol 'Tutup' atau modal error")
-                        time.sleep(2)
-                else:
-                    print(f"    ✅ Tidak ada peserta belum konfirmasi")
+                print(f"📑 Total halaman: {total_halaman}")
+
+                for h in range(total_halaman):
+                    print(f"➡ Proses halaman {h+1} dari {total_halaman}")
+
+                    konfirmasi_buttons = page.locator("button:has-text('Konfirmasi Hadir')")
+                    count = konfirmasi_buttons.count()
+                    if count > 0:
+                        print(f"    🔘 Ditemukan {count} peserta belum konfirmasi")
+                        for i in range(count):
+                            konfirmasi_buttons.first.click()
+                            page.wait_for_timeout(500)
+                            page.wait_for_selector("div.max-h-full", timeout=5000)
+                            page.wait_for_selector("input#verify", timeout=5000)
+                            page.click("div.check")
+                            
+                            hadir_btn = page.locator("button:has(div.tracking-wide:has-text('Hadir'))").last
+                            hadir_btn.click()
+                            if page.wait_for_selector("button.w-fill >> text=Tutup", timeout=3000):
+                                page.click("button.w-fill >> text=Tutup")
+                            else:
+                                print(f"❓ Tidak ada tombol 'Tutup' atau modal error")
+                            time.sleep(2)
+
+                    else:
+                        print(f"    ✅ Tidak ada peserta belum konfirmasi")
+
+                    if h < total_halaman - 1:
+                        pagination = page.locator("ul.vpagination li.page-item a.page-link")
+                        pagination.nth(h+1).click()  # klik halaman berikutnya
+                        page.wait_for_timeout(2000)
 
 if __name__ == "__main__":
     konfirmasi_hadir()
