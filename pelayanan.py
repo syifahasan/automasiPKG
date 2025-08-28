@@ -16,6 +16,8 @@ file_who = "C:/Users/PKM_SJNT/Documents/WHO_IMTU.xlsx"
 try:
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File tidak ditemukan: {file_path}")
+    elif not os.path.exists(file_who):
+        raise FileNotFoundError(f"File referensi WHO tidak ditemukan: {file_who}")
 
     df = pd.read_excel(file_path)
     df_who = pd.read_excel(file_who)
@@ -31,10 +33,12 @@ try:
     
     if df.empty:
         raise ValueError("File Excel kosong atau tidak ada data yang valid.")
+    elif df_who.empty:
+        raise ValueError("File referensi WHO kosong atau tidak ada data yang valid.")
 
     print("✅ File Excel berhasil dibaca")
-    print(f"Jumlah baris: {len(df)}")
-    print(df.head())
+    print(f"Jumlah baris: {len(df_who)}")
+    print(df_who.head())
 
 except (FileNotFoundError, ValueError) as e:
     print(f"⚠️ {e}")
@@ -71,6 +75,28 @@ def hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who):
         status = "Obesitas"
 
     return status, imt
+
+def gizi_anak(page, row, df_who):
+    page.locator("button:has(div:has-text('Input Data'))").nth(8).click()
+    page.wait_for_timeout(1000)
+    try:
+        berat = float(row[29])
+        tinggi = float(row[30])
+        umur_bulan = int(row[8])
+        gender = str(row[1])
+
+        status, imt = hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who)
+        print(f"🧮 {row[2]} | IMT={imt} → {status}")
+        page.fill("input[placeholder='dalam kg']", str(berat))
+        page.fill("input[placeholder='dalam cm']", str(tinggi))
+        page.locator("select").select_option(status)
+
+        page.click("input[title='Kirim']")
+        page.wait_for_timeout(1000)
+    except Exception as e:
+        print(f"⚠️ Gagal input gizi untuk {row[2]}: {e}")
+
+
 
 def pelayanan():
     profile_path = r"E:\ChromeProfileAutomation"
@@ -141,8 +167,8 @@ def pelayanan():
                         page.wait_for_timeout(1000)
 
                         # Input Data Pemeriksaan Gizi Anak Sekolah
-                        page.locator("div:has-text('Gizi Anak Sekolah') >> .. >> button:has-text('Input Data')").click()
-                        page.wait_for_timeout(1000)
+                        gizi_anak(page, row_excel, df_who)
+
 
 
 
