@@ -84,9 +84,10 @@ def gizi_anak(page, row, df_who):
         tinggi = float(row[30])
         umur_bulan = int(row[8])
         gender = str(row[1])
+        print("DEBUG row data:", row.to_dict())
 
         status, imt = hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who)
-        print(f"🧮 {row[2]} | IMT={imt} → {status}")
+        print(f"🧮 {row[0]} | IMT={imt} → {status}")
         page.fill("input[placeholder='dalam kg']", str(berat))
         page.fill("input[placeholder='dalam cm']", str(tinggi))
         page.locator("select").select_option(status)
@@ -94,7 +95,7 @@ def gizi_anak(page, row, df_who):
         page.click("input[title='Kirim']")
         page.wait_for_timeout(1000)
     except Exception as e:
-        print(f"⚠️ Gagal input gizi untuk {row[2]}: {e}")
+        print(f"⚠️ Gagal input gizi untuk {row[0]}: {e}")
 
 
 
