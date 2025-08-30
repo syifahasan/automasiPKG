@@ -65,7 +65,7 @@ def hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who):
 
     # Klasifikasi
     if imt < m3sd:
-        status = "Gizi Buruk"
+        status = "Gizi Kurang"
     elif imt < m2sd:
         status = "Gizi Kurang"
     elif imt <= p1sd:
@@ -78,7 +78,7 @@ def hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who):
     return status, imt
 
 def gizi_anak(page, row, df_who):
-    page.locator("button:has(div:has-text('Input Data'))").nth(8).click()
+    page.locator("div.flex.items-center:has-text('Gizi Anak Sekolah') >> text=Input Data").click()
     page.wait_for_timeout(1000)
     try:
         berat = float(row[29])
@@ -102,7 +102,7 @@ def gizi_anak(page, row, df_who):
         print(f"⚠️ Gagal input gizi untuk {row[0]}: {e}")
 
 def tensi_siswa(page, row):
-    page.locator("button:has(div:has-text('Input Data'))").nth(9).click()
+    page.locator("div.flex.items-center:has-text('Tekanan Darah') >> text=Input Data").click()
     page.wait_for_timeout(1000)
     try:
         tensi_raw = str(row[38]).strip()
@@ -130,7 +130,7 @@ def tensi_siswa(page, row):
         print(f"⚠️ Gagal input tensi untuk {row[0]}: {e}")
 
 def gigi_siswa(page, row):
-    page.locator("button:has(div:has-text('Input Data'))").nth(10).click()
+    page.locator("div.flex.items-center:has-text('Pemeriksaan Gigi') >> text=Input Data").click()
     page.wait_for_timeout(1000)
     try:
         kondisi_gigi = str(row[56]).strip().lower()
@@ -159,7 +159,12 @@ def gigi_siswa(page, row):
                 radio_id = "sq_100i_3"
 
         print(f"🧮 Kondisi Gigi: {kondisi_gigi} → {pilihan}")
-        page.locator(f"label[for='{radio_id}']").click()
+        try:
+            page.locator(f"input[type='radio']#{radio_id}").check(force=True)
+            print("✔ Berhasil pilih via .check()")
+        except Exception:
+            page.locator(f"label[for='{radio_id}']").click()
+            print("✔ Berhasil pilih via label click()")
         page.wait_for_timeout(1000)
 
         page.locator(f"input[title='Kirim']").click()
@@ -168,7 +173,7 @@ def gigi_siswa(page, row):
         print(f"⚠️ Gagal input gigi untuk {row[0]}: {e}")
 
 def mata_telinga_siswa (page, row):
-    page.locator("button:has(div:has-text('Input Data'))").nth(11).click()
+    page.locator("div.flex.items-center:has-text('Skrining Telinga dan Mata') >> text=Input Data").click()
     page.wait_for_timeout(1000)
     try:
         kacamata = str(row[54]).strip().lower()
@@ -184,11 +189,11 @@ def mata_telinga_siswa (page, row):
             radio_id_tajam_kanan = "sq_100i_0"
             radio_id_tajam_kiri = "sq_101i_0"
 
-        page.locator(f"label[for='{radio_id_tajam_kanan}']").click()
-        page.locator(f"label[for='{radio_id_tajam_kiri}']").click()
+        page.locator(f"input[type='radio']#{radio_id_tajam_kanan}").check(force=True)
+        page.locator(f"input[type='radio']#{radio_id_tajam_kiri}").check(force=True)
         page.wait_for_timeout(1000)
 
-        print(f"🧮 Kondisi Mata: {tajam_pendengaran} → {pilihan_telinga}")
+        print(f"🧮 Kondisi Telinga: {tajam_pendengaran} → {pilihan_telinga}")
 
         #Serumen Impaksi
         if serumen_impaksi in ['1', 'ya', 'ada']:
@@ -212,8 +217,8 @@ def mata_telinga_siswa (page, row):
             radio_id_serumen_kanan = "sq_102i_1"
             radio_id_serumen_kiri = "sq_103i_1"
 
-        page.locator(f"label[for='{radio_id_serumen_kanan}']").click()
-        page.locator(f"label[for='{radio_id_serumen_kiri}']").click()
+        page.locator(f"input[type='radio']#{radio_id_serumen_kanan}").check(force=True)
+        page.locator(f"input[type='radio']#{radio_id_serumen_kiri}").check(force=True)
         print(f"🧮 Kondisi Telinga: {pilihan_serumen}")
 
         #Infeksi Telinga
@@ -234,8 +239,8 @@ def mata_telinga_siswa (page, row):
             radio_id_infeksi_kanan = "sq_104i_1"
             radio_id_infeksi_kiri = "sq_105i_1"
         
-        page.locator(f"label[for='{radio_id_infeksi_kanan}']").click()
-        page.locator(f"label[for='{radio_id_infeksi_kiri}']").click()
+        page.locator(f"input[type='radio']#{radio_id_infeksi_kanan}").check(force=True)
+        page.locator(f"input[type='radio']#{radio_id_infeksi_kiri}").check(force=True)
         print(f"🧮 Kondisi Telinga: {infeksi_telinga} → {pilihan_infeksi}")
 
         #Mata Luar
@@ -256,30 +261,30 @@ def mata_telinga_siswa (page, row):
             radio_id_mata_luar_kanan = "sq_106i_1"
             radio_id_mata_luar_kiri = "sq_107i_1"
 
-        page.locator(f"label[for='{radio_id_mata_luar_kanan}']").click()
-        page.locator(f"label[for='{radio_id_mata_luar_kiri}']").click()
+        page.locator(f"input[type='radio']#{radio_id_mata_luar_kanan}").check(force=True)
+        page.locator(f"input[type='radio']#{radio_id_mata_luar_kiri}").check(force=True)
         print(f"🧮 Kondisi Mata Luar: {mata_luar} → {pilihan_mata_luar}")
 
         #Visus Mata
         if visus_mata in ['', 'nan', 'normal', 'tidak ada', '0']:
             pilihan_visus = 'Visus 6/6 - 6/9'
-            radio_id_visus_kanan = "sq_108i_1"
-            radio_id_visus_kiri = "sq_109i_1"
-        elif visus_mata in ['kiri']:
-            pilihan_visus = 'Rabun'
-            radio_id_visus_kanan = "sq_108i_1"
+            radio_id_visus_kanan = "sq_108i_0"
             radio_id_visus_kiri = "sq_109i_0"
-        elif visus_mata in ['kanan']:
+        elif visus_mata in ['kiri']:
             pilihan_visus = 'Rabun'
             radio_id_visus_kanan = "sq_108i_0"
             radio_id_visus_kiri = "sq_109i_1"
+        elif visus_mata in ['kanan']:
+            pilihan_visus = 'Rabun'
+            radio_id_visus_kanan = "sq_108i_1"
+            radio_id_visus_kiri = "sq_109i_0"
         else:
             pilihan_visus = 'Visus 6/6 - 6/9'
-            radio_id_visus_kanan = "sq_108i_1"
-            radio_id_visus_kiri = "sq_109i_1"
+            radio_id_visus_kanan = "sq_108i_0"
+            radio_id_visus_kiri = "sq_109i_0"
         
-        page.locator(f"label[for='{radio_id_visus_kanan}']").click()
-        page.locator(f"label[for='{radio_id_visus_kiri}']").click()
+        page.locator(f"input[type='radio']#{radio_id_visus_kanan}").check(force=True)
+        page.locator(f"input[type='radio']#{radio_id_visus_kiri}").check(force=True)
         print(f"🧮 Kondisi Visus: {visus_mata} → {pilihan_visus}")
 
         #Penggunaan Kacamata
@@ -289,7 +294,7 @@ def mata_telinga_siswa (page, row):
         else:
             pilihan_kacamata = 'Ya'
             radio_id_kacamata = "sq_110i_1"
-        page.locator(f"label[for='{radio_id_kacamata}']").click()
+        page.locator(f"input[type='radio']#{radio_id_kacamata}").check(force=True)
         print(f"🧮 Penggunaan Kacamata: {kacamata} → {pilihan_kacamata}")
         page.wait_for_timeout(1000)
         page.locator(f"input[title='Kirim']").click()
@@ -298,6 +303,42 @@ def mata_telinga_siswa (page, row):
 
     except Exception as e:
         print(f"⚠️ Gagal input skrining Telinga dan Mata untuk {row[0]}: {e}")
+
+def sudah_selesai_pemeriksaan(page):
+    status = page.locator("div.flex.items-center >> text=Selesai Pemeriksaan").first
+    return status.is_visible()
+
+def kebugaran_jasmani(page, row):
+    try:
+        # Cek apakah menu Kebugaran Jasmani ada di halaman
+        if page.locator("div.flex.items-center:has-text('Kebugaran Jasmani') >> text=Input Data").count() == 0:
+            print("ℹ️ Kebugaran Jasmani tidak tersedia untuk kelas ini, skip...")
+            return
+        
+        # Klik Input Data
+        page.locator("div.flex.items-center:has-text('Kebugaran Jasmani') >> text=Input Data").click()
+        page.wait_for_timeout(1000)
+
+        # Contoh: isi nilai VO2Max / push up / lari sesuai data Excel
+        kebugaran = str(row[60]).strip().lower()
+        if kebugaran in ['', 'nan', '0']:
+            kebugaran = 'Baik'
+        elif kebugaran in ['ya', '1']:
+            kebugaran = 'Kurang'
+        print(f"🏃 Kebugaran Jasmani: {kebugaran}")
+
+        # Isi ke field (sesuaikan locator inputnya)
+        page.locator("#sq_100i").click()
+        page.wait_for_timeout(1000)
+        page.locator(f"div[title='{kebugaran}']").click()
+        # page.fill("input[placeholder='Nilai Kebugaran']", kebugaran)
+
+        # Klik kirim
+        page.locator("input[title='Kirim']").click()
+        page.wait_for_timeout(1000)
+
+    except Exception as e:
+        print(f"⚠️ Gagal input kebugaran jasmani untuk {row[0]}: {e}")
 
 def pelayanan():
     profile_path = r"E:\ChromeProfileAutomation"
@@ -325,7 +366,9 @@ def pelayanan():
                 time.sleep(1)
 
                 kelas_list = [f"Kelas {i}" for i in range(1, 7)]
-                for kelas in kelas_list:
+                current_kelas_index = 0
+                for kelas_index in range(current_kelas_index, len(kelas_list)):
+                    kelas = kelas_list[kelas_index]
                     print(f"  ⬇ Proses kelas {kelas}")
                     kelas_dropdown = page.locator("div.relative.text-black").nth(1)
                     time.sleep(2)
@@ -365,8 +408,17 @@ def pelayanan():
                                 
                                 pelayanan_buttons.nth(i).click()
                                 page.wait_for_timeout(1000)
-                                mulai_pemeriksaan = page.locator("button:has(div.tracking-wide:has-text('Mulai Pemeriksaan'))")
-                                mulai_pemeriksaan.click()
+                                btn_selesai = page.locator("button:has(div.tracking-wide:has-text('Selesaikan Layanan'))")
+                                btn_mulai = page.locator("button:has(div.tracking-wide:has-text('Mulai Pemeriksaan'))")
+                                if btn_mulai.is_visible():
+                                    print("🔘 Tombol 'Mulai Pemeriksaan' ditemukan → klik dulu")
+                                    btn_mulai.click()
+                                    page.wait_for_timeout(1000)
+                                elif btn_selesai.is_visible():
+                                    print("✅ Sudah di halaman pemeriksaan, tombol 'Selesaikan Layanan' tersedia → langsung isi form")
+                                else:
+                                    print("⚠️ Tidak ditemukan tombol pemeriksaan, skip peserta ini")
+                                    continue
                                 page.wait_for_timeout(1000)
 
                                 # Input Data Pemeriksaan Gizi Anak Sekolah
@@ -374,18 +426,97 @@ def pelayanan():
                                 tensi_siswa(page, row_excel)
                                 gigi_siswa(page, row_excel)
                                 mata_telinga_siswa(page, row_excel)
+                                kebugaran_jasmani(page, row_excel)
                                 page.wait_for_timeout(4000)
 
-                                selesai_pemeriksaan = page.locator("button:has(div.tracking-wide:has-text('Selesaikan Layanan'))")
-                                selesai_pemeriksaan.click()
-                                page.wait_for_timeout(2000)
-
+                                btn_selesai.click()
                                 hadir_btn = page.locator("button:has(div.tracking-wide:has-text('Konfirmasi'))").last
                                 hadir_btn.click()
 
+                                # page.wait_for_function("() => document.body.innerText.includes('Selesai Pemeriksaan')")
+
+                                for _ in range(30):  # max 30 × 1 detik = 30 detik timeout
+                                    if sudah_selesai_pemeriksaan(page):
+                                        print("🟢 Status Selesai Pemeriksaan muncul → ulang dari awal (Pelayanan + pilih sekolah)")
+                                        # langsung lompat ke while True (ulang dari atas)
+                                        raise Exception("ULANG_LOOP")
+                                    else:
+                                        print("⏳ Menunggu status Selesai Pemeriksaan...")
+                                        page.wait_for_timeout(1000)
+                                else:
+                                    print("⚠️ Timeout: Status tidak muncul, skip peserta ini")
+                                    continue
+                                # selesai_pemeriksaan = page.locator("button:has(div.tracking-wide:has-text('Selesaikan Layanan'))")
+                                # selesai_pemeriksaan.click()
+                                # page.wait_for_timeout(2000)
+                        else:
+                            page.locator("div.cursor-pointer:has-text('Sedang Pemeriksaan')").click()
+                            pelayanan_buttons = page.locator("button:has(div.tracking-wide:has-text('Mulai'))")
+                            count_sedang = pelayanan_buttons.count()
+
+                            if count_sedang == 0:
+                                print("✅ Tidak ada peserta di tab Sedang Pemeriksaan → lanjut ke kelas berikutnya")
+                                continue   # langsung skip ke kelas selanjutnya
+                            else:
+                                print(f"  🔘 Ditemukan {count_sedang} peserta belum dilayani, memproses...")
+                                page.wait_for_selector("table tbody tr")
+                                rows = page.locator("table tbody tr")
+                                row_count = rows.count()
+                                for i in range(row_count):
+                                    nama_web = rows.nth(i).locator("td").nth(1).inner_text().strip()
+                                    print(f"🔎 Cek peserta: {nama_web}")
+                                    # print(data[0].head())
+                                    # print(data[0].dtype)
+
+                                    # Cari di Excel berdasarkan kolom Nama (anggap ada di kolom ke-1)
+                                    match = data[data[0].astype(str).str.strip().str.lower() == nama_web.strip().lower()]
+
+                                    if match.empty:
+                                        print(f"   ⏭️ {nama_web} tidak ditemukan di Excel")
+                                        continue
+
+                                    row_excel = match.iloc[0]
+                                    
+                                    pelayanan_buttons.nth(i).click()
+                                    page.wait_for_timeout(1000)
+                                    mulai_pemeriksaan = page.locator("button:has(div.tracking-wide:has-text('Selesaikan Layanan'))")
+                                    # mulai_pemeriksaan.click()
+                                    page.wait_for_timeout(1000)
+
+                                    # Input Data Pemeriksaan Gizi Anak Sekolah
+                                    gizi_anak(page, row_excel, df_who)
+                                    tensi_siswa(page, row_excel)
+                                    gigi_siswa(page, row_excel)
+                                    mata_telinga_siswa(page, row_excel)
+                                    kebugaran_jasmani(page, row_excel)
+                                    page.wait_for_timeout(4000)
+
+                                    selesai_pemeriksaan = page.locator("button:has(div.tracking-wide:has-text('Selesaikan Layanan'))")
+                                    selesai_pemeriksaan.click()
+                                    hadir_btn = page.locator("button:has(div.tracking-wide:has-text('Konfirmasi'))").last
+                                    hadir_btn.click()
+
+                                    # page.wait_for_function("() => document.body.innerText.includes('Selesai Pemeriksaan')")
+
+                                    for _ in range(30):  # max 30 × 1 detik = 30 detik timeout
+                                        if sudah_selesai_pemeriksaan(page):
+                                            print("🟢 Status Selesai Pemeriksaan muncul → ulang dari awal (Pelayanan + pilih sekolah)")
+                                            # langsung lompat ke while True (ulang dari atas)
+                                            raise Exception("ULANG_LOOP")
+                                        else:
+                                            print("⏳ Menunggu status Selesai Pemeriksaan...")
+                                            page.wait_for_timeout(1000)
+                                    else:
+                                        print("⚠️ Timeout: Status tidak muncul, skip peserta ini")
+                                        continue
+
                 print("🔄 Semua kelas sudah diproses, kembali ke menu awal...")
+                break
             except Exception as e:
-                print(f"⚠️ Error: {e}, ulang dari menu awal...")
+                if str(e) == "ULANG_LOOP":
+                    continue  # restart while True
+                print(f"⚠️ Error di loop utama: {e}")
+                continue
 
 
 
