@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # ====== VALIDASI & BACA EXCEL ======
-file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN DADAP 3/Rekap Hasil Pemeriksaan Kesehatan Anak Sekolah sdn dadap 3.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SMP PUI JUNTIKEBON/UPTD SMP PUI JUNTIKEBON.xlsx"
 
 selector_nav_prev = ".mx-icon-double-left"  # tombol mundur tahun
 selector_nav_next = ".mx-icon-double-right"  # tombol maju tahun
@@ -109,6 +109,18 @@ def pilih_jenjang(page, kode_kelas: str):
         kelas = "Kelas 5 "
     elif kode_kelas == 6:
         kelas = "Kelas 6 "
+    elif kode_kelas == 7:
+        kelas = "Kelas 7 "
+    elif kode_kelas == 8:
+        kelas = "Kelas 8 "
+    elif kode_kelas == 9:
+        kelas = "Kelas 9 "
+    elif kode_kelas == 10:
+        kelas = "Kelas 10 "
+    elif kode_kelas == 11:
+        kelas = "Kelas 11 "
+    elif kode_kelas == 12:
+        kelas = "Kelas 12 "
 
     if kelas is None:
         raise ValueError(f"kode_kelas tidak valid: {kode_kelas}")
@@ -199,12 +211,12 @@ def daftar_pasien():
             disabilitas(page, kode_disabilitas)
             nomor = row[10]
             no_wa(page, nomor)
-            nama_sekolah = "UPTD SDN 3 DADAP"
+            nama_sekolah = "SMP PUI JUNTIKEBON"
             pilih_sekolah(page, nama_sekolah)
             kode_kelas = row[4]
             pilih_jenjang(page, kode_kelas)
             page.check("input[type='checkbox'][id='alamat-sama-dengan-sekolah']", force=True)
-            alamat = " ".join(nama_sekolah.split()[3:])
+            alamat = " ".join(nama_sekolah.split()[2:])
             page.fill("textarea#detail-domisili", str(alamat))
 
             #input("Tekan ENTER untuk lanjut submit...")

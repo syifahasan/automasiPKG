@@ -11,7 +11,7 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/MII JUNTIKEBON/KELAS 1 5.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN DADAP 3/Rekap Hasil Pemeriksaan Kesehatan Anak Sekolah sdn dadap 3.xlsx"
 file_who = "C:/Users/PKM_SJNT/Documents/WHO_IMTU.xlsx"
 
 try:
@@ -80,6 +80,7 @@ def hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who):
 def gizi_anak(page, row, df_who):
     page.locator("div.flex.items-center:has-text('Gizi Anak Sekolah') >> text=Input Data").click()
     page.wait_for_timeout(1000)
+    # print("DEBUG row data:", row.to_dict())
     try:
         berat = float(row[29])
         tinggi = float(row[30])
@@ -184,7 +185,7 @@ def mata_telinga_siswa (page, row):
         visus_mata = str(row[52]).strip().lower()
 
         #tajam pendengaran
-        if tajam_pendengaran in ['', 'nan', 'normal', 'tidak ada', '1', 'ya']:
+        if tajam_pendengaran in ['', 'nan', 'normal', 'tidak ada', '1', 'ya', '0', 'tidak']:
             pilihan_telinga = 'Normal'
             radio_id_tajam_kanan = "sq_100i_0"
             radio_id_tajam_kiri = "sq_101i_0"
@@ -237,7 +238,7 @@ def mata_telinga_siswa (page, row):
         else:
             pilihan_infeksi = 'Ada infeksi telinga'
             radio_id_infeksi_kanan = "sq_104i_1"
-            radio_id_infeksi_kiri = "sq_105i_1"
+            radio_id_infeksi_kiri = "sq_105i_0"
         
         page.locator(f"input[type='radio']#{radio_id_infeksi_kanan}").check(force=True)
         page.locator(f"input[type='radio']#{radio_id_infeksi_kiri}").check(force=True)
@@ -349,7 +350,7 @@ def pelayanan():
             headless=False
         )
 
-        nama_sekolah = "MIS ISLAMIYAH JUNTIKEBON"
+        nama_sekolah = "UPTD SDN 3 DADAP"
 
         page = browser.new_page()
         page.goto("https://sehatindonesiaku.kemkes.go.id", wait_until="load")
@@ -362,6 +363,7 @@ def pelayanan():
                 print(f"=== Memproses sekolah: {nama_sekolah} ===")
                 sekolah_dropdown = page.locator("div.relative.text-black").nth(0)
                 sekolah_dropdown.click()
+                page.fill("input[placeholder='Cari']", nama_sekolah)
                 page.locator("div.py-2.px-4.cursor-pointer", has_text=nama_sekolah).click()
                 time.sleep(1)
 
@@ -374,6 +376,13 @@ def pelayanan():
                     time.sleep(2)
                     kelas_dropdown.click()
                     page.locator("div.py-2.px-4.cursor-pointer", has_text=kelas).click()
+                    tab_belum = page.locator("div.cursor-pointer:has-text('Belum Pemeriksaan')")
+                    tab_sedang = page.locator("div.cursor-pointer:has-text('Sedang Pemeriksaan')")
+
+                    if tab_sedang.get_attribute("class") and "text-teal-500" in tab_sedang.get_attribute("class"):
+                        print("↩️ Masih di tab Sedang Pemeriksaan → pindah ke tab Belum Pemeriksaan sebelum ganti kelas")
+                        tab_belum.click()
+                        page.wait_for_timeout(1000)
 
                     page.wait_for_timeout(2000)
                     pagination = page.locator("ul.vpagination li.page-item a.page-link")
@@ -451,6 +460,7 @@ def pelayanan():
                                 # page.wait_for_timeout(2000)
                         else:
                             page.locator("div.cursor-pointer:has-text('Sedang Pemeriksaan')").click()
+                            page.wait_for_timeout(5000)
                             pelayanan_buttons = page.locator("button:has(div.tracking-wide:has-text('Mulai'))")
                             count_sedang = pelayanan_buttons.count()
 
