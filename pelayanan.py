@@ -13,6 +13,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN DADAP 3/Rekap Hasil Pemeriksaan Kesehatan Anak Sekolah sdn dadap 3.xlsx"
 file_who = "C:/Users/PKM_SJNT/Documents/WHO_IMTU.xlsx"
+file_bbtb = "C:/Users/PKM_SJNT/Documents/indonesia_height_weight_13_20_estimate.xlsx"
 
 try:
     if not os.path.exists(file_path):
@@ -22,6 +23,7 @@ try:
 
     df = pd.read_excel(file_path)
     df_who = pd.read_excel(file_who)
+    df_bbtb = pd.read_excel(file_bbtb)
 
     # GANTI START ROW HARUS
     start_row = 10  # 0-based index, jadi baris 47 = index 46
@@ -77,16 +79,43 @@ def hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who):
 
     return status, imt
 
+def get_normal_bb_tb(umur_bulan, gender, df_bbtb):
+    # Konversi bulan → tahun (dibulatkan ke bawah)
+    umur_tahun = umur_bulan // 12
+
+    # Filter berdasarkan umur dan gender
+    row = df_bbtb[
+        (df_bbtb["Umur(tahun)"] == umur_tahun) & 
+        (df_bbtb["Gender"] == gender)
+    ]
+
+    if not row.empty:
+        bb = float(row["BB_normal"].values[0])
+        tb = float(row["TB_normal"].values[0])
+        return bb, tb
+    else:
+        return None, None
+
 def gizi_anak(page, row, df_who):
     page.locator("div.flex.items-center:has-text('Gizi Anak Sekolah') >> text=Input Data").click()
     page.wait_for_timeout(1000)
     # print("DEBUG row data:", row.to_dict())
     try:
-        berat = float(row[29])
-        tinggi = float(row[30])
+        berat = row[29]
+        tinggi = row[30]
         umur_bulan = int(row[8])
         gender = str(row[1])
         print("DEBUG row data:", row.to_dict())
+
+        if pd.isna(berat) or pd.isna(tinggi):
+            bb_norm, tb_norm = get_normal_bb_tb(umur_bulan, gender, df_bbtb)
+            if pd.isna(berat):
+                berat = bb_norm
+            if pd.isna(tinggi):
+                tinggi = tb_norm
+        
+        berat = float(berat)
+        tinggi = float(tinggi)
 
         status, imt = hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who)
         print(f"🧮 {row[0]} | IMT={imt} → {status}")

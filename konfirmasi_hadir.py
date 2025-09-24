@@ -24,7 +24,7 @@ def get_all_sekolah(page):
         # scroll ke elemen terakhir biar load data berikutnya
         last_item = dropdown.nth(dropdown.count() - 1)
         last_item.scroll_into_view_if_needed()
-        page.wait_for_timeout(500)  # jeda setengah detik biar data muncul
+        page.wait_for_timeout(1500)  # jeda setengah detik biar data muncul
 
         # cek kalau tidak ada tambahan sekolah → berarti sudah habis
         if len(sekolah_list) == prev_count:
@@ -32,7 +32,7 @@ def get_all_sekolah(page):
         prev_count = len(sekolah_list)
 
     page.click("text=Pilih Sekolah")
-    page.wait_for_timeout(300)  # opsional biar lebih natural
+    page.wait_for_timeout(500)  # opsional biar lebih natural
 
     return list(sekolah_list)
 
@@ -56,15 +56,28 @@ def konfirmasi_hadir():
         # sekolah_list = [el.inner_text() for el in sekolah_elements.all()]
         all_sekolah = get_all_sekolah(page)
         print(f"Ditemukan {len(all_sekolah)} sekolah:", all_sekolah)
-        kelas_list = [f"Kelas {i}" for i in range(1, 7)]
+        #kelas_list = [f"Kelas {i}" for i in range(1, 10)]
+
+        # target_sekolah = "SMAN 1 JUNTINYUAT"
 
         for sekolah in all_sekolah:
+            # if sekolah != target_sekolah:
+            #     continue  # lewati sekolah lain
             print(f"➡ Proses sekolah: {sekolah}")
             # pilih sekolah
             # page.click("label:text('Sekolah')")
             sekolah_dropdown = page.locator("div.relative.text-black").nth(0)
             sekolah_dropdown.click()
             page.locator("div.py-2.px-4.cursor-pointer", has_text=sekolah).click()
+
+            nama_upper = sekolah.upper()
+
+            if "SMP" in nama_upper or "MTS" in nama_upper:
+                kelas_list = [f"Kelas {i}" for i in range(7, 10)]
+            elif "SMA" in nama_upper or "SMK" in nama_upper:
+                kelas_list = [f"Kelas {i}" for i in range(10, 13)]
+            else:
+                kelas_list = [f"Kelas {i}" for i in range(1, 7)]  # default SD/MI
 
             for kelas in kelas_list:
                 print(f"  ⬇ Proses kelas {kelas}")
@@ -73,11 +86,30 @@ def konfirmasi_hadir():
                 kelas_dropdown.click()
                 page.locator("div.py-2.px-4.cursor-pointer", has_text=kelas).click()
 
+                page.wait_for_timeout(1500)
+                if page.get_by_text("1", exact=True).count() > 0:
+                    page.get_by_text("1", exact=True).click()
+                    page.wait_for_timeout(2000)
+                else:
+                    print("⚠ Tidak ada data/pagination untuk kelas ini, skip ke kelas berikutnya")
+                    continue
                 page.wait_for_timeout(2000)
-                pagination = page.locator("ul.vpagination li.page-item a.page-link")
-                total_halaman = pagination.count()
-                if total_halaman == 0:
-                    total_halaman = 1  # fallback kalau cuma 1 halaman
+
+                # page.wait_for_timeout(2000)
+                # ambil semua tombol pagination
+                buttons = page.locator("ul >> li")
+
+                # cari teks dari tombol sebelum terakhir (karena terakhir biasanya '>')
+                last_page_text = buttons.nth(-2).inner_text()
+
+                # pastikan isinya angka
+                if last_page_text.isdigit():
+                    total_halaman = int(last_page_text)
+                else:
+                    # fallback: cari angka terbesar dari semua tombol
+                    texts = [b.inner_text() for b in buttons.all()]
+                    angka = [int(t) for t in texts if t.isdigit()]
+                    total_halaman = max(angka)
 
                 print(f"📑 Total halaman: {total_halaman}")
 
@@ -106,9 +138,10 @@ def konfirmasi_hadir():
                     else:
                         print(f"    ✅ Tidak ada peserta belum konfirmasi")
 
+                    # pindah halaman dengan tombol NEXT (›), bukan indeks
                     if h < total_halaman - 1:
-                        pagination = page.locator("ul.vpagination li.page-item a.page-link")
-                        pagination.nth(h+1).click()  # klik halaman berikutnya
+                        next_button = page.locator("ul.vpagination li.page-item a.page-link").last
+                        next_button.click()
                         page.wait_for_timeout(2000)
 
 if __name__ == "__main__":
