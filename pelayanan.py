@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import sys
 import gspread
+import re
 from oauth2client.service_account import ServiceAccountCredentials
 import time
 import random
@@ -11,7 +12,7 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN DADAP 3/Rekap Hasil Pemeriksaan Kesehatan Anak Sekolah sdn dadap 3.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN DADAP 2/DADAP 2 ALL.xlsx"
 file_who = "C:/Users/PKM_SJNT/Documents/WHO_IMTU.xlsx"
 file_bbtb = "C:/Users/PKM_SJNT/Documents/indonesia_height_weight_13_20_estimate.xlsx"
 
@@ -379,7 +380,7 @@ def pelayanan():
             headless=False
         )
 
-        nama_sekolah = "UPTD SDN 3 DADAP"
+        nama_sekolah = "UPTD SDN 2 DADAP"
 
         page = browser.new_page()
         page.goto("https://sehatindonesiaku.kemkes.go.id", wait_until="load")
@@ -390,12 +391,16 @@ def pelayanan():
                 page.click("text=Pelayanan")
                 # Pilih sekolah manual (satu sekolah per sesi)
                 print(f"=== Memproses sekolah: {nama_sekolah} ===")
-                sekolah_dropdown = page.locator("div.relative.text-black").nth(0)
+                sekolah_dropdown = page.locator(
+                    "div.relative.text-black",
+                    has_text=re.compile(f"^(Pilih sekolah|{nama_sekolah})$")
+                )
+                # sekolah_dropdown = page.locator("div:has(div:has-text('Sekolah')) div.relative.text-black").first
+                # sekolah_dropdown.wait_for(state="visible", timeout=10000)
                 sekolah_dropdown.click()
-                page.fill("input[placeholder='Cari']", nama_sekolah)
+                page.fill("input[id='sekolah']", nama_sekolah)
                 page.locator("div.py-2.px-4.cursor-pointer", has_text=nama_sekolah).click()
                 time.sleep(1)
-
                 kelas_list = [f"Kelas {i}" for i in range(1, 7)]
                 current_kelas_index = 0
                 for kelas_index in range(current_kelas_index, len(kelas_list)):

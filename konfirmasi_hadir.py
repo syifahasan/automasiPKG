@@ -58,11 +58,11 @@ def konfirmasi_hadir():
         print(f"Ditemukan {len(all_sekolah)} sekolah:", all_sekolah)
         #kelas_list = [f"Kelas {i}" for i in range(1, 10)]
 
-        # target_sekolah = "SMAN 1 JUNTINYUAT"
+        target_sekolah = "UPTD SDN 2 JUNTIKEDOKAN"
 
         for sekolah in all_sekolah:
-            # if sekolah != target_sekolah:
-            #     continue  # lewati sekolah lain
+            if sekolah != target_sekolah:
+                continue  # lewati sekolah lain
             print(f"➡ Proses sekolah: {sekolah}")
             # pilih sekolah
             # page.click("label:text('Sekolah')")
