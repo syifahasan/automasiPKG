@@ -58,7 +58,7 @@ def konfirmasi_hadir():
         print(f"Ditemukan {len(all_sekolah)} sekolah:", all_sekolah)
         #kelas_list = [f"Kelas {i}" for i in range(1, 10)]
 
-        target_sekolah = "UPTD SDN 2 JUNTIKEDOKAN"
+        target_sekolah = "UPTD SDN 1 DADAP"
 
         for sekolah in all_sekolah:
             if sekolah != target_sekolah:

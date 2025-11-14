@@ -12,7 +12,7 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN DADAP 2/DADAP 2 ALL.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGSEKOLAH/HASIL/SDN LIMBANGAN 1/LIMBANGAN 1 KELAS 1 DAN 6.xlsx"
 file_who = "C:/Users/PKM_SJNT/Documents/WHO_IMTU.xlsx"
 file_bbtb = "C:/Users/PKM_SJNT/Documents/indonesia_height_weight_13_20_estimate.xlsx"
 
@@ -81,30 +81,48 @@ def hitung_status_gizi(umur_bulan, gender, berat, tinggi, df_who):
     return status, imt
 
 def get_normal_bb_tb(umur_bulan, gender, df_bbtb):
-    # Konversi bulan → tahun (dibulatkan ke bawah)
+    # Konversi ke tahun (pembulatan ke bawah)
     umur_tahun = umur_bulan // 12
 
-    # Filter berdasarkan umur dan gender
-    row = df_bbtb[
-        (df_bbtb["Umur(tahun)"] == umur_tahun) & 
-        (df_bbtb["Gender"] == gender)
-    ]
+    # Filter sesuai gender
+    df_gender = df_bbtb[df_bbtb["Gender"] == gender]
+
+    # Jika tidak ada baris dengan umur sama, cari umur terdekat
+    if umur_tahun not in df_gender["Umur(tahun)"].values:
+        closest_age = df_gender["Umur(tahun)"].iloc[(df_gender["Umur(tahun)"] - umur_tahun).abs().argsort()].iloc[0]
+        row = df_gender[df_gender["Umur(tahun)"] == closest_age]
+    else:
+        row = df_gender[df_gender["Umur(tahun)"] == umur_tahun]
 
     if not row.empty:
         bb = float(row["BB_normal"].values[0])
         tb = float(row["TB_normal"].values[0])
         return bb, tb
     else:
-        return None, None
+        # Kembalikan default aman
+        print(f"⚠️ Tidak ditemukan nilai normal untuk umur={umur_bulan} bulan ({gender}), pakai default 20kg/110cm")
+        return 20.0, 110.0
 
-def gizi_anak(page, row, df_who):
+
+def gizi_anak(page, row, df_who, df_bbtb):
     page.locator("div.flex.items-center:has-text('Gizi Anak Sekolah') >> text=Input Data").click()
     page.wait_for_timeout(1000)
     # print("DEBUG row data:", row.to_dict())
     try:
         berat = row[29]
         tinggi = row[30]
-        umur_bulan = int(row[8])
+        # umur_bulan = int(row[8])
+
+        umur_bulan = None
+        if not pd.isna(row[8]):
+            umur_bulan = int(row[8])
+        elif not pd.isna(row[7]) and isinstance(row[7], datetime):
+            today = datetime.today()
+            umur_bulan = (today.year - row[7].year) * 12 + (today.month - row[7].month)
+        else:
+            print(f"⚠️ Umur tidak valid untuk {row[0]}, skip input gizi")
+            return
+        
         gender = str(row[1])
         print("DEBUG row data:", row.to_dict())
 
@@ -114,6 +132,11 @@ def gizi_anak(page, row, df_who):
                 berat = bb_norm
             if pd.isna(tinggi):
                 tinggi = tb_norm
+
+        if berat is None or tinggi is None:
+            print(f"⚠️ Data gizi {row[0]} tidak lengkap, dilewati.")
+            return
+
         
         berat = float(berat)
         tinggi = float(tinggi)
@@ -215,7 +238,7 @@ def mata_telinga_siswa (page, row):
         visus_mata = str(row[52]).strip().lower()
 
         #tajam pendengaran
-        if tajam_pendengaran in ['', 'nan', 'normal', 'tidak ada', '1', 'ya', '0', 'tidak']:
+        if tajam_pendengaran in ['', 'nan', 'normal', 'tidak ada', '1', 'ya', '0', 'tidak', '√']:
             pilihan_telinga = 'Normal'
             radio_id_tajam_kanan = "sq_100i_0"
             radio_id_tajam_kiri = "sq_101i_0"
@@ -380,10 +403,13 @@ def pelayanan():
             headless=False
         )
 
-        nama_sekolah = "UPTD SDN 2 DADAP"
+        nama_sekolah = "UPTD SDN 1 LIMBANGAN"
 
         page = browser.new_page()
         page.goto("https://sehatindonesiaku.kemkes.go.id", wait_until="load")
+
+        kelas_list = [f"Kelas {i}" for i in range(1, 7)]
+        current_kelas_index = 0
         
         while True:
             try:
@@ -401,11 +427,11 @@ def pelayanan():
                 page.fill("input[id='sekolah']", nama_sekolah)
                 page.locator("div.py-2.px-4.cursor-pointer", has_text=nama_sekolah).click()
                 time.sleep(1)
-                kelas_list = [f"Kelas {i}" for i in range(1, 7)]
-                current_kelas_index = 0
+                
                 for kelas_index in range(current_kelas_index, len(kelas_list)):
                     kelas = kelas_list[kelas_index]
                     print(f"  ⬇ Proses kelas {kelas}")
+                    current_kelas_index = kelas_index 
                     kelas_dropdown = page.locator("div.relative.text-black").nth(1)
                     time.sleep(2)
                     kelas_dropdown.click()
@@ -457,6 +483,8 @@ def pelayanan():
                                     print("🔘 Tombol 'Mulai Pemeriksaan' ditemukan → klik dulu")
                                     btn_mulai.click()
                                     page.wait_for_timeout(1000)
+                                    page.wait_for_selector("text=Konfirmasi Tanggal Pemeriksaan").is_visible()
+                                    page.locator("button:has-text('Simpan')").click()
                                 elif btn_selesai.is_visible():
                                     print("✅ Sudah di halaman pemeriksaan, tombol 'Selesaikan Layanan' tersedia → langsung isi form")
                                 else:
@@ -465,7 +493,7 @@ def pelayanan():
                                 page.wait_for_timeout(1000)
 
                                 # Input Data Pemeriksaan Gizi Anak Sekolah
-                                gizi_anak(page, row_excel, df_who)
+                                gizi_anak(page, row_excel, df_who, df_bbtb)
                                 tensi_siswa(page, row_excel)
                                 gigi_siswa(page, row_excel)
                                 mata_telinga_siswa(page, row_excel)
@@ -528,7 +556,7 @@ def pelayanan():
                                     page.wait_for_timeout(1000)
 
                                     # Input Data Pemeriksaan Gizi Anak Sekolah
-                                    gizi_anak(page, row_excel, df_who)
+                                    gizi_anak(page, row_excel, df_who, df_bbtb)
                                     tensi_siswa(page, row_excel)
                                     gigi_siswa(page, row_excel)
                                     mata_telinga_siswa(page, row_excel)
@@ -558,6 +586,7 @@ def pelayanan():
                 break
             except Exception as e:
                 if str(e) == "ULANG_LOOP":
+                    print(f"🔁 Mengulang dari kelas terakhir: {kelas_list[current_kelas_index]}")
                     continue  # restart while True
                 print(f"⚠️ Error di loop utama: {e}")
                 continue

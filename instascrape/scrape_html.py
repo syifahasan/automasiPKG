@@ -7,13 +7,35 @@ async def cari_caption(username, keyword):
     print(f"Mencari kata '{keyword}' di akun @{username} ... (tanpa login)")
 
     hasil = []
-    max_scroll = 30  # ubah sesuai jumlah posting yang diinginkan
+    max_scroll = 30  # ubah sesuai kebutuhan
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
-        page = await browser.new_page()
+        browser = await p.chromium.launch(
+            headless=False,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-infobars",
+                "--disable-dev-shm-usage",
+                "--disable-gpu"
+            ]
+        )
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            viewport={"width": 1366, "height": 768}
+        )
+        page = await context.new_page()
 
-        await page.goto(f"https://www.instagram.com/{username}/", timeout=60000)
+        try:
+            await page.goto(f"https://www.instagram.com/{username}/", timeout=60000)
+            await page.wait_for_selector("article", timeout=20000)
+        except Exception as e:
+            print(f"Gagal membuka profil @{username}: {e}")
+            await browser.close()
+            return
+
+        print("Berhasil membuka profil, mulai scroll...")
 
         last_height = await page.evaluate("document.body.scrollHeight")
         for i in range(max_scroll):
@@ -24,14 +46,11 @@ async def cari_caption(username, keyword):
                 break
             last_height = new_height
 
-        posts = await page.query_selector_all("article a")
+        posts = await page.query_selector_all("article a[href*='/p/']")
         print(f"Memeriksa {len(posts)} posting...")
 
         for post in posts:
             href = await post.get_attribute("href")
-            if not href or not href.startswith("/p/"):
-                continue
-
             post_url = f"https://www.instagram.com{href}"
             try:
                 await page.goto(post_url, timeout=30000)
@@ -46,7 +65,6 @@ async def cari_caption(username, keyword):
 
         await browser.close()
 
-    # simpan ke CSV
     filename = f"hasil_pencarian_{username}_{int(time.time())}.csv"
     with open(filename, "w", newline='', encoding="utf-8") as f:
         writer = csv.writer(f)
