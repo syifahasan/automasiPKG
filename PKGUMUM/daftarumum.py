@@ -2,13 +2,14 @@ import pandas as pd
 import os
 import sys
 import time
+import re
 import math
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 # ====== VALIDASI & BACA EXCEL ======
-file_path = "C:/Users/PKM_SJNT/Documents/PKGUMUM/PASIEN HOME VISIT 5-8 NOV 2025.xlsx"
+file_path = "C:/Users/PKM_SJNT/Documents/PKGUMUM/PASIEN HOME VISIT 10-15 NOV 2025 part 2.xlsx"
 
 selector_nav_prev = ".mx-icon-double-left"  # tombol mundur tahun
 selector_nav_next = ".mx-icon-double-right"  # tombol maju tahun
@@ -26,7 +27,7 @@ try:
 
     df = pd.read_excel(file_path)
     # GANTI START ROW HARUS
-    start_row = 13 # 0-based index, jadi baris 47 = index 46
+    start_row = 49 # 0-based index, jadi baris 47 = index 46
     start_col = 1   # kolom ke-2 = index 1
 
     data = df.iloc[start_row:, start_col:]
@@ -175,9 +176,11 @@ def pilih_alamat(page, provinsi, kabupaten, kecamatan, kelurahan_excel):
     # Tunggu Kelurahan muncul, lalu pilih sesuai Excel
     page.wait_for_selector("text='Daftar Kelurahan'")
     page.wait_for_selector("div.modal-content", state="visible")
+    if kelurahan_excel.lower() == "juntinyuat":
+        kelurahan_excel = "Juntunyuat"
     page.get_by_text(kelurahan_excel, exact=True).click()
 
-def tanggal_pemeriksaan(page):
+def tanggal_pemeriksaan(page, total):
     page.wait_for_selector("div.grid.grid-cols-7", state="visible")
 
     tanggal_buttons = page.locator("button.relative.h-auto")
@@ -206,15 +209,15 @@ def tanggal_pemeriksaan(page):
 
         # Ambil kuota (angka di bawah tanggal)
         kuota_locator = button.locator("css=[class*='text-[15px]'] span")
-        kuota_text = kuota_locator.text_content().strip() if kuota_locator.count() > 0 else "0"
-        kuota = int(kuota_text) if kuota_text.isdigit() else 0
+        # kuota_text = kuota_locator.text_content().strip() if kuota_locator.count() > 0 else "0"
+        # kuota = int(kuota_text) if kuota_text.isdigit() else 0
 
-        if tanggal == today and kuota <= 10:
+        if tanggal == today and total >= 100:
             continue  # langsung loncat ke tanggal berikutnya
 
-        if kuota > 10:
+        if total <= 100:
             button.click()
-            print(f"✅ Memilih tanggal {tanggal} (kuota: {kuota})")
+            print(f"✅ Memilih tanggal {tanggal} (kuota: {total})")
             return
         
         
@@ -289,8 +292,9 @@ def pilih_tanggal(page, tanggal: datetime):
 
     # 5. Pilih tanggal
     tanggal_str = tanggal.strftime("%Y-%m-%d")
+    tanggal_print = tanggal.strftime("%d/%m/%Y")
     page.click(f"td.cell[title='{tanggal_str}']")
-    print(f"✅ Tanggal lahir dipilih: {tanggal_str}")
+    print(f"✅ Tanggal lahir dipilih: {tanggal_print}")
 
 
 
@@ -309,12 +313,20 @@ def daftar_pasien():
         page.click("text=Cari/Daftarkan Individu")
 
         for index, row in data.iterrows():
+            blok = page.locator("div:has-text('Menampilkan')")
+            b_items = blok.locator("b")
+            if b_items.count() < 2:
+                print(f"Format teks tidak sesuai")
+            total_text = b_items.nth(1).text_content().strip()
+            match = re.search(r'(\d+)', total_text)
+            total_data = int(match.group(1)) if match else 0
+
             page.locator("text=Daftar Baru").first.click()
             page.wait_for_selector("form >> input[name='NIK']", timeout=5000)
 
             if not isi_nik(page, row, index):
                 continue  # langsung lompat ke siswa berikutnya
-            page.fill("input[name='Nama']", str(row[1]))      # Kolom kedua setelah start_col
+            page.fill("input[name='Nama']", str(row[1]))    # Kolom kedua setelah start_col
             tgl = pd.to_datetime(row[7])
             pilih_tanggal(page, tgl)
             kode_kelamin = row[6]
@@ -335,12 +347,22 @@ def daftar_pasien():
             # # alamat = "Juntikedokan"
             page.fill("textarea#detail-domisili", alamat_excel)
 
-            tanggal_pemeriksaan(page)
+            tanggal_pemeriksaan(page, total_data)
 
             #input("Tekan ENTER untuk lanjut submit...")
-            time.sleep(1)
+            time.sleep(2)
 
             page.click("text=Selanjutnya")
+            habis_notif = page.locator('div.p-2:has-text("Kuota Pemeriksaan Habis")')
+
+            if habis_notif.count() > 0:
+                # page.locator("button.btn-fill-primary").click()
+                # page.locator("button:has(div.tracking-wide:has-text('Lanjut'))").click()
+                page.get_by_role("button", name="Lanjut", exact=True).click()
+                page.wait_for_timeout(2000)
+
+                
+                # page.wait_for_selector("text=Daftar Baru", state="visible", timeout=5000)
 
             page.locator('button.w-fill >> text=Pilih').click()
             page.locator('div.tracking-wide >> text=Daftarkan dengan NIK ').click()

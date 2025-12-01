@@ -1,9 +1,7 @@
 import pandas as pd
 import os
 import sys
-import gspread
 import re
-from oauth2client.service_account import ServiceAccountCredentials
 import time
 import random
 import math

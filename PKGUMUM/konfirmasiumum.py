@@ -55,7 +55,7 @@ def konfirmasiumum():
                             time.sleep(2)
                     else:
                         print(f"    ✅ Tidak ada peserta belum konfirmasi")
-                        break
+                        
 
                     if h < total_halaman - 1:
                         next_button = page.locator("ul.vpagination li.page-item a.page-link").last
